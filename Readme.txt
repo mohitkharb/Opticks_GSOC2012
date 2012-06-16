@@ -10,3 +10,7 @@ For running the plugin in opticks :
 Copy the dll files from Release folder of build "<sdk-directory>\Build\Binaries-Win32-release\PlugIns\" to the plugin folder of Opticks installation. 
 Run opticks.
 	
+
+I have added folder named meanshift. This folder contains the meanshift executable that implements the meanshift algorithm for image segmentation.
+You just have to give the location of this folder when you are asked to browse for meanshift folder. 
+This is just a temporary folder and will be romoved once I integrate the segmentation code in tha source.

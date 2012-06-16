@@ -25,6 +25,8 @@
 #include "switchOnEncoding.h"
 #include <limits>
 #include "PreProcessing.h"
+#include "mainwindow.h"
+#include <QtGui\qapplication.h>
 
 REGISTER_PLUGIN_BASIC(OpticksOBIAPlugin, PreProcessing);
 namespace
@@ -62,6 +64,36 @@ bool PreProcessing::getInputSpecification(PlugInArgList* &pInArgList)
    pInArgList->addArg<Progress>(Executable::ProgressArg(), NULL, "Progress reporter");
    pInArgList->addArg<RasterElement>(Executable::DataElementArg(), "Generate statistics for this raster element");
    return true;
+}
+
+void PreProcessing :: CalculateMeanshift()
+{
+	FILE *fp21 = fopen("C:\\Windows\\Temp\\testing.ppm", "wb"); /* b - binary mode */
+    fprintf(fp21, "P6\n%d %d\n255\n", Cols, Rows);
+	for(int i = 0;i < Rows; i++){
+                for(int k = 0;k < Cols; k++){
+
+                    static unsigned char color[3];
+                    //SegmentedImage->Red[j]	= ch[i*Rows + k  ];
+                    //SegmentedImage->Green[j]= ch[i*Rows + k+1];
+                    //SegmentedImage->Blue[j]	= ch[i*Rows + k+2];
+					std::stringstream colrsB;
+					colrsB << dataB[(i*Cols + k)];
+					color[0]	= colrsB.str().c_str()[0];
+					std::stringstream colrsG;
+					colrsG << dataG[(i*Cols + k)];
+                    color[1]    = colrsG.str().c_str()[0];
+					std::stringstream colrsR;
+					colrsR << dataR[(i*Cols + k)];
+                    color[2]	= colrsR.str().c_str()[0];
+                  //  std::cout << int (color[0]) << " " << int (color[1]) << " " << int (color[2]) << std::endl;
+                    fwrite(color, 1, 3, fp21);
+
+                }
+            }
+	fclose(fp21);
+
+
 }
 
 bool PreProcessing::getOutputSpecification(PlugInArgList*& pOutArgList)
@@ -104,8 +136,10 @@ StepResource pStep("Reading Image Data", "app", "27170298-10CE-4E6C-AD7A-97E8058
    pRequestB->setInterleaveFormat(BSQ);
 
    
-   
+   Rows = pDesc->getRowCount();
+   Cols = pDesc->getColumnCount();
 
+  
    
 
    pRequestR->setBands(pDesc->getActiveBand(0),pDesc->getActiveBand(0));
@@ -118,9 +152,7 @@ StepResource pStep("Reading Image Data", "app", "27170298-10CE-4E6C-AD7A-97E8058
    double totalR = 0.0;
    double totalG = 0.0;
    double totalB = 0.0;
-   std::vector<double> dataR;
-   std::vector<double> dataG;
-   std::vector<double> dataB;
+
    for (unsigned int row = 0; row < pDesc->getRowCount(); ++row)
    {
       if (isAborted())
@@ -182,17 +214,21 @@ StepResource pStep("Reading Image Data", "app", "27170298-10CE-4E6C-AD7A-97E8058
    pStep->addProperty("values Green", dataG);
    pStep->addProperty("values Blue", dataB);
    
+  // CalculateMeanshift();
+
+   MainWindow w(Rows ,Cols, dataR, dataG, dataB,3);
+   w.update();
+   w.show();
+
+
 
    pOutArgList->setPlugInArgValue("values Red", &dataR);
    pOutArgList->setPlugInArgValue("values Green", &dataG);
    pOutArgList->setPlugInArgValue("values Blue", &dataB);
 
    pStep->finalize();
-   return true;
-
-	
-
    
+   return true;
 
 }
 

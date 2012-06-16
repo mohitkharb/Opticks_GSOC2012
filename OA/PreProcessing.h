@@ -7,9 +7,15 @@
 
 class PreProcessing : public ExecutableShell
 {
-   
 
 public:
+		int Rows;
+	int Cols;
+	std::vector<double> dataR;
+	std::vector<double> dataG;
+	std::vector<double> dataB;
+
+	void CalculateMeanshift();
    PreProcessing();
    ~PreProcessing();
    bool getInputSpecification(PlugInArgList*& pInArgList);
