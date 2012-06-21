@@ -26,7 +26,8 @@
 #include <limits>
 #include "PreProcessing.h"
 #include "mainwindow.h"
-#include <QtGui\qapplication.h>
+#include "DesktopServices.h"
+
 
 REGISTER_PLUGIN_BASIC(OpticksOBIAPlugin, PreProcessing);
 namespace
@@ -40,9 +41,11 @@ namespace
    }
 };
 PreProcessing::PreProcessing() 
+	:w(NULL)
 {
- setDescriptorId("{DF7B5AEF-B156-40ae-8DF6-6B3D5BC964E1}");
-   setName("Reading Image Data");
+	
+ 
+   ViewerShell::setName("Desktop API Test");
    setCreator("Mohit Kumar");
    setType("Sample");
    setCopyright("Copyright (C) 2012, Lab For Spatial Informatics");
@@ -50,6 +53,7 @@ PreProcessing::PreProcessing()
    setDescription("Verifies Requirement 324.");
    setShortDescription("Verifies Requirement 324.");
    setMenuLocation("[OBIA]\\Read Data");
+	setDescriptorId("{DF7B5AEF-B156-40ae-8DF6-6B3D5BC964E1}");
    setWizardSupported(false);
 }
 
@@ -66,35 +70,7 @@ bool PreProcessing::getInputSpecification(PlugInArgList* &pInArgList)
    return true;
 }
 
-void PreProcessing :: CalculateMeanshift()
-{
-	FILE *fp21 = fopen("C:\\Windows\\Temp\\testing.ppm", "wb"); /* b - binary mode */
-    fprintf(fp21, "P6\n%d %d\n255\n", Cols, Rows);
-	for(int i = 0;i < Rows; i++){
-                for(int k = 0;k < Cols; k++){
 
-                    static unsigned char color[3];
-                    //SegmentedImage->Red[j]	= ch[i*Rows + k  ];
-                    //SegmentedImage->Green[j]= ch[i*Rows + k+1];
-                    //SegmentedImage->Blue[j]	= ch[i*Rows + k+2];
-					std::stringstream colrsB;
-					colrsB << dataB[(i*Cols + k)];
-					color[0]	= colrsB.str().c_str()[0];
-					std::stringstream colrsG;
-					colrsG << dataG[(i*Cols + k)];
-                    color[1]    = colrsG.str().c_str()[0];
-					std::stringstream colrsR;
-					colrsR << dataR[(i*Cols + k)];
-                    color[2]	= colrsR.str().c_str()[0];
-                  //  std::cout << int (color[0]) << " " << int (color[1]) << " " << int (color[2]) << std::endl;
-                    fwrite(color, 1, 3, fp21);
-
-                }
-            }
-	fclose(fp21);
-
-
-}
 
 bool PreProcessing::getOutputSpecification(PlugInArgList*& pOutArgList)
 {
@@ -109,6 +85,8 @@ bool PreProcessing::getOutputSpecification(PlugInArgList*& pOutArgList)
 
 bool PreProcessing::execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList)
 {
+
+	
 StepResource pStep("Reading Image Data", "app", "27170298-10CE-4E6C-AD7A-97E8058C29FF");
    if (pInArgList == NULL || pOutArgList == NULL)
    {
@@ -208,29 +186,52 @@ StepResource pStep("Reading Image Data", "app", "27170298-10CE-4E6C-AD7A-97E8058
 			+ "Number of bands : "+ StringUtilities::toDisplayString(pDesc->getBandCount()) +"\n"
                         + "Averages: " + StringUtilities::toDisplayString(meanR) +" : "+ StringUtilities::toDisplayString(meanG) +" : "+ StringUtilities::toDisplayString(meanB) +"\n"
 					  + "Values of first pixel: " + StringUtilities::toDisplayString(dataR.front())+" : "+ StringUtilities::toDisplayString(dataG.front())+" : "+ StringUtilities::toDisplayString(dataB.front());
+
+	
+
       pProgress->updateProgress(msg, 100, NORMAL);
    }
+   
    pStep->addProperty("values Red", dataR);
    pStep->addProperty("values Green", dataG);
    pStep->addProperty("values Blue", dataB);
    
-  // CalculateMeanshift();
-
-   MainWindow w(Rows ,Cols, dataR, dataG, dataB,3);
-   w.update();
-   w.show();
-
-
-
    pOutArgList->setPlugInArgValue("values Red", &dataR);
    pOutArgList->setPlugInArgValue("values Green", &dataG);
    pOutArgList->setPlugInArgValue("values Blue", &dataB);
 
-   pStep->finalize();
+
+
+
    
+    
+  if (w == NULL)
+  {   
+      Service<DesktopServices> pDesktop;
+     w = new MainWindow(Rows, Cols, dataR, dataG, dataB,3,pDesktop->getMainWidget());
+	  w->connect(w,SIGNAL(finished(int)),SLOT(dialogClosed()));
+  }
+      //VERIFYNR(w, SIGNAL(finished(int)), this, SLOT(dialogClosed()));
+   
+
+   	   w->show();
+	   
+
+	//   pProgress->updateProgress("mainwindow launched", 100, NORMAL);
+
+   pStep->finalize();
+
    return true;
 
 }
 
 
+QWidget* PreProcessing::getWidget() const
+{
+   return w;
+}
 
+void PreProcessing::dialogClosed()
+{
+   abort();
+}

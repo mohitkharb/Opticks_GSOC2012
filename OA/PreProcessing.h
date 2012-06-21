@@ -3,24 +3,38 @@
 #ifndef PREPROCESSING_H
 #define PREPROCESSING_H
 
-#include "ExecutableShell.h"
+#include <QtCore/QObject>
 
-class PreProcessing : public ExecutableShell
+#include "ViewerShell.h"
+
+class MainWindow;
+
+class PreProcessing : public QObject, public ViewerShell
 {
-
+	Q_OBJECT
 public:
-		int Rows;
+	int Rows;
 	int Cols;
 	std::vector<double> dataR;
 	std::vector<double> dataG;
 	std::vector<double> dataB;
-
-	void CalculateMeanshift();
+	
+	
+	MainWindow * w;
+	
    PreProcessing();
    ~PreProcessing();
+   
    bool getInputSpecification(PlugInArgList*& pInArgList);
    bool getOutputSpecification(PlugInArgList*& pOutArgList);
    bool execute(PlugInArgList* pInArgList, PlugInArgList* pOutArgList);
+
+   protected:
+   QWidget* getWidget() const;
+
+   protected slots:
+   void dialogClosed();
+
 
 
 };

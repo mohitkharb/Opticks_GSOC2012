@@ -12,7 +12,7 @@ Speedup = MEDIUM;
 DisplayProgress ON;
 
 //Load an image to be segmented
-Load('E:/qt_trying/mymeanshift/release/images/ts2_2.ppm',IMAGE);
+Load('C:\Windows\Temp\testing.ppm',IMAGE);
 
 //Segment the image
 Segment;
@@ -20,7 +20,7 @@ Segment;
 //Save the result:
 
 //The segmented image...
-Save('C:\Windows\Temp\seg_ts2_2.ppm', PPM, SEGM_IMAGE);
+Save('C:\Windows\Temp\seg_OpticksImage.ppm', PPM, SEGM_IMAGE);
 
 //The filtered image...
 //Save('filtimage.ppm', PPM, FILT_IMAGE);

@@ -12,13 +12,13 @@
 #include<sstream>
 #include <QDebug>
 #include<QList>
+
 MainWindow::MainWindow(int rows, int cols, std::vector<double> dataR, std::vector<double> dataG, std::vector<double> dataB, int bandnum, QWidget *parent) :
 	Rows(rows), Cols(cols), dataR(dataR), dataG(dataG), dataB(dataB),num_band(bandnum),
-    QMainWindow(parent),
+    QDialog(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    
 }
 
 MainWindow::~MainWindow()
@@ -43,25 +43,9 @@ void MainWindow::Show_process(std::string mod)
 }
 
 
-void MainWindow::on_msdir_clicked()
+void MainWindow::on_pushButton_2_clicked()
 {
-    QFileDialog::Options options = QFileDialog::DontResolveSymlinks | QFileDialog::ShowDirsOnly;
-    ms_dir = QFileDialog::getExistingDirectory(this,
-                                    tr("QFileDialog::getExistingDirectory()"),
-                                    ui->dirLabel->text(),
-                                    options);
-        if (!ms_dir.isEmpty())
-            ui->dirLabel->setText(ms_dir);
-}
-
-
-
-
-
-
-void MainWindow::on_pushButton_ms_clicked()
-{
-    ui->textBrowser->setText("calculating mean shift.");
+	 ui->textBrowser->setText("calculating mean shift.");
         if(!ms_dir.isEmpty())
         {
 
@@ -92,9 +76,9 @@ void MainWindow::on_pushButton_ms_clicked()
 
 
         //QString img = ui->lineEdit->text();
-        QString sbw = ui->lineEdit_s1->text();
-        QString rbw = ui->lineEdit_r1->text();
-        QString mra = ui->lineEdit_m1->text();
+        QString sbw = ui->lineEdit->text();
+        QString rbw = ui->lineEdit_2->text();
+        QString mra = ui->lineEdit_3->text();
        
 
         //std::cout << img_fullname.to
@@ -163,11 +147,9 @@ void MainWindow::on_pushButton_ms_clicked()
         else ui->textBrowser->setText("Select directory and file names.");
 }
 
-void MainWindow::on_pushButton_cd_clicked()
+void MainWindow::on_pushButton_3_clicked()
 {
-
-
-       if(!ms_dir.isEmpty())
+	       if(!ms_dir.isEmpty())
        {
             data1 = readPPMImage(imgsize,"C:/Windows/Temp/testing.ppm",num_band);
     std::cout<<"here1"<<std::endl;
@@ -199,4 +181,15 @@ void MainWindow::on_pushButton_cd_clicked()
 
          }
        else ui->textBrowser->setText("Select correct Mean Shift directory or Image name missing.");
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+	 QFileDialog::Options options = QFileDialog::DontResolveSymlinks | QFileDialog::ShowDirsOnly;
+    ms_dir = QFileDialog::getExistingDirectory(this,
+                                    tr("QFileDialog::getExistingDirectory()"),
+                                    ui->label_2->text(),
+                                    options);
+        if (!ms_dir.isEmpty())
+            ui->label_2->setText(ms_dir);
 }
