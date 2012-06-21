@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QDialog>
-#include "codes.h"
+//#include "codes.h"
+#include "attributebased.h"
 
 namespace Ui {
     class MainWindow;

@@ -13,6 +13,7 @@
 #include <QDebug>
 #include<QList>
 
+
 MainWindow::MainWindow(int rows, int cols, std::vector<double> dataR, std::vector<double> dataG, std::vector<double> dataB, int bandnum, QWidget *parent) :
 	Rows(rows), Cols(cols), dataR(dataR), dataG(dataG), dataB(dataB),num_band(bandnum),
     QDialog(parent),
@@ -176,7 +177,8 @@ void MainWindow::on_pushButton_3_clicked()
                std::cout<<"here5"<<std::endl;
                ui->textBrowser->setText("Feature Extraction Done.");
 
-
+			   AttributeBased *a= new AttributeBased(Rows,Cols,labels1,data1,i1,num_band,0);
+			   a->show();
 
 
          }

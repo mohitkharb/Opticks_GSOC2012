@@ -7,14 +7,21 @@
     <ClCompile Include="ModuleManager.cpp" />
     <ClCompile Include="$(BuildDir)\Moc\$(ProjectName)\moc_mainwindow.cpp" />
     <ClCompile Include="$(BuildDir)\Moc\$(ProjectName)\moc_PreProcessing.cpp" />
+    <ClCompile Include="attributebased.cpp" />
+    <ClCompile Include="pain2img.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="codes.h" />
     <ClInclude Include="$(BuildDir)\Uic\$(ProjectName)\ui_mainwindow.h" />
+    <ClInclude Include="attributebased.h" />
+    <ClInclude Include="pain2img.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mainwindow.h" />
     <CustomBuild Include="PreProcessing.h" />
     <CustomBuild Include="mainwindow.ui" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="attributebased.ui" />
   </ItemGroup>
 </Project>
