@@ -11,6 +11,7 @@ Copy the dll files from Release folder of build "<sdk-directory>\Build\Binaries-
 Run opticks.
 	
 
-I have added folder named meanshift. This folder contains the meanshift executable that implements the meanshift algorithm for image segmentation.
-You just have to give the location of this folder when you are asked to browse for meanshift folder. 
+I have added folder named mymeanshift. This folder contains the meanshift executable that implements the meanshift algorithm for image segmentation.
+You just have to give the location of "mymeanshift/release"  folder when you are asked to browse for meanshift folder. 
 This is just a temporary folder and will be romoved once I integrate the segmentation code in tha source.
+The mean shift code is made using the "EDISON" project.
