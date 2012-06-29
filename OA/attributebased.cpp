@@ -288,6 +288,9 @@ void AttributeBased::on_radioButton_5_clicked()
 void AttributeBased::on_pushButton_clicked()
 {
 
+	objs.erase(objs.begin(),objs.end());
+	pixels.erase(pixels.begin(),pixels.end());
+
     int index = 0;
     std::cout<<"here1"<<std::endl;
 
