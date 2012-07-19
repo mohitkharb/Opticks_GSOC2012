@@ -12,6 +12,15 @@
 #include<sstream>
 #include <QDebug>
 #include<QList>
+#include<gdal\gdal.h>
+#include<gdal\gdal_alg.h>
+#include<gdal\cpl_conv.h>
+#include<gdal\ogr_api.h>
+#include<gdal\ogr_srs_api.h>
+#include<gdal/cpl_string.h>
+#include<gdal/ogrsf_frmts.h>
+#include<gdal/gdal_priv.h>
+#include<gdal\cpl_port.h>
 
 
 MainWindow::MainWindow(int rows, int cols, std::vector<double> dataR, std::vector<double> dataG, std::vector<double> dataB, int bandnum, QWidget *parent) :
@@ -561,4 +570,296 @@ void MainWindow::classificationImage(){
     class_m.clear();
     //  fclose(new_class);
 
+}
+void MainWindow::Ras2Vect(){
+
+    GDALAllRegister();//To load drivers for all known raster formats
+
+    //GDALDataset *RasImage;//This holds original data in GeoTiff format..
+    //RasImage=(GDALDataset*)GDALOpen(argv[1],GA_Update);//input geotiff file
+
+    int ROWS=Rows;
+    int COLS=Cols;
+    int onum;
+
+    GDALDataset *TempImage;//for creating a 32bit datatype image ..
+
+    GDALDriver *poDriver1;
+
+    // char *options[]= {"SHPT=SHPT_POLYGON","OGR_ORGANIZE_POLYGONS=DEFAULT"};
+    // cout<<options[0]<<endl;
+    poDriver1 = GetGDALDriverManager()->GetDriverByName("GTiff");
+    TempImage = poDriver1->Create( "SegImage.tiff", COLS, ROWS, 1, GDT_Int32,NULL);//this creates an image of 1 band with data type uint32
+    //cout<<"safe"<<endl;
+    // double TC[6];//holds GeoTransform information of the original image...
+
+    // RasImage->GetGeoTransform(TC);
+    // TempImage->SetGeoTransform(TC);
+
+    int *segimage;//this will hold segmentation result...
+    segimage=(int *)malloc(sizeof(int)*ROWS*COLS);
+
+    //FILE *fseg;
+    //fseg=fopen(argv[2],"r");//input segmentation result in ascii format..
+
+    int i;
+
+    for(i=0;i<ROWS*COLS;i++)
+    {
+        int y=ROWS-1-(i/COLS);
+        int x=(i%COLS);
+        //segimage[i]=labels1[y][x];
+        segimage[i]=labels1[y][x];
+       // std::cout << x<<" "<<y<<std::endl;
+
+        //fscanf(fseg,"%d",&segimage[i]);
+    }
+//    for(i=(ROWS*COLS)-1;i>=0;i--)
+//    {
+//        int x=i/COLS;
+//        int y=(i%COLS);
+//        segimage[i]=labels1[x][y];
+
+//        //fscanf(fseg,"%d",&segimage[i]);
+//    }
+    GDALRasterBand *SegBand;//this will hold the segmenatation result..
+    SegBand=TempImage->GetRasterBand(1);
+    //SegBand->RasterIO(GF_Write,0,0,COLS,ROWS,(void *)segimage,COLS,ROWS,GDT_Int32,0,0);//Writing the BSQ formatted data to SegBand...
+    SegBand->RasterIO(GF_Write,0,0,COLS,ROWS,(void *)segimage,COLS,ROWS,GDT_Int32,0,0);//Writing the BSQ formatted data to SegBand...
+    //Now we are ready with an image band holding our segmentation result...
+    //Now we have to all gdal function that polygonize a band..
+
+    OGRSFDriver *poDriver,*Driver_gml;//handler for vector data
+
+    OGRRegisterAll();
+
+    poDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("ESRI Shapefile");//can change output vector format...
+    //Driver_gml = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("GML");//can change output vector format...
+    OGRDataSource *poDS,*source_gml;
+
+    std::cout << "before split" << std::endl;
+    QList <QString> list1 = img_name.split(QRegExp("\\."));
+    std::cout << "after split" << std::endl;
+
+   // std::cout << img_name.toUtf8().data() << std::endl;
+
+    QString temp = list1.first(),deletecheck,text_number;
+    std::cout << "naming file done" <<std::endl;
+    temp.append(".shp");
+   // std::cout << "xyz.shp" <<std::endl;
+    //poDS = poDriver->CreateDataSource( "xyz.shp", NULL );//Open a vector file in default format...
+    if( access( temp.toUtf8().data(), F_OK ) != -1 ) {
+        deletecheck = "del ";
+        deletecheck.append(temp);
+        Show_process(deletecheck.toUtf8().data());
+
+    }
+    std::cout<< "here1 " <<std::endl;
+
+    poDS = poDriver->CreateDataSource( temp.toUtf8().data(), NULL );//Open a vector file in default format...
+    std::cout<< "here2 " <<std::endl;
+    if( poDS == NULL )
+    {
+        printf( "Creation of output file failed.\n" );
+        exit( 1 );
+    }
+
+    std::cout<< "here3 " <<std::endl;
+    //source_gml = Driver_gml->CreateDataSource( "mygmlfile.gml",NULL );//Open a vector file in default format...
+
+    OGRLayer *poLayer,*layer_gml;
+    poLayer = poDS->CreateLayer( "main_layer", NULL, wkbPolygon, NULL );//main_layer is our only layer for the vector result..
+    //layer_gml = source_gml->CreateLayer( "main_layer", NULL, wkbPolygon, NULL );//main_layer is our only layer for the vector result..
+    if( poLayer == NULL )
+    {
+        printf( "Layer creation failed.\n" );
+        exit( 1 );
+    }
+    //Now we need to add fields that each feature can have...
+
+
+
+std::cout<< "here4 " <<std::endl;
+    OGRFieldDefn oField1( "ObjectNum", OFTInteger);
+    oField1.SetWidth(32);
+    poLayer->CreateField(&oField1);
+    //layer_gml->CreateField(&oField1);
+
+    OGRFieldDefn oField2( "Mean_Red", OFTInteger);
+    oField2.SetWidth(32);
+    poLayer->CreateField(&oField2,FALSE);
+    //layer_gml->CreateField(&oField2);
+
+    OGRFieldDefn oField3( "Mean_Green", OFTInteger);
+    oField3.SetWidth(32);
+    poLayer->CreateField(&oField3);
+    //layer_gml->CreateField(&oField3);
+
+    OGRFieldDefn oField4( "Mean_Blue", OFTInteger);
+    oField4.SetWidth(32);
+    oField4.SetPrecision(8);
+    poLayer->CreateField(&oField4);
+    //layer_gml->CreateField(&oField4);
+
+    OGRFieldDefn oField5( "Std_Red", OFTReal);
+    oField5.SetWidth(32);
+    oField5.SetPrecision(8);
+    poLayer->CreateField(&oField5);
+    //layer_gml->CreateField(&oField5);
+
+    OGRFieldDefn oField6( "Std_Green", OFTReal);
+    oField6.SetWidth(32);
+    oField6.SetPrecision(8);
+    poLayer->CreateField(&oField6);
+    //layer_gml->CreateField(&oField6);
+
+    OGRFieldDefn oField7( "Std_Blue", OFTReal);
+    oField7.SetWidth(32);
+    oField7.SetPrecision(8);
+    poLayer->CreateField(&oField7);
+    //layer_gml->CreateField(&oField7);
+    //poLayer is a pointer to a layer in which the next function is going to write the data..
+
+    OGRFieldDefn oField8( "Area", OFTInteger);
+    oField8.SetWidth(32);
+    oField8.SetPrecision(8);
+    poLayer->CreateField(&oField8);
+    //layer_gml->CreateField(&oField8);
+
+    OGRFieldDefn oField9( "Perimeter", OFTInteger);
+    oField9.SetWidth(32);
+    oField9.SetPrecision(8);
+    poLayer->CreateField(&oField9);
+    //layer_gml->CreateField(&oField10);
+
+    OGRFieldDefn oField10( "XCentroid", OFTInteger);
+    oField10.SetWidth(32);
+    oField10.SetPrecision(8);
+    poLayer->CreateField(&oField10);
+    //layer_gml->CreateField(&oField10);
+
+    OGRFieldDefn oField11( "YCentroid", OFTInteger);
+    oField11.SetWidth(32);
+    oField11.SetPrecision(8);
+    poLayer->CreateField(&oField11);
+    //layer_gml->CreateField(&oField10);
+
+    OGRFieldDefn oField12( "Roundness", OFTReal);
+    oField12.SetWidth(32);
+    oField12.SetPrecision(8);
+    poLayer->CreateField(&oField12);
+    //layer_gml->CreateField(&oField10);
+
+    OGRFieldDefn oField13( "Compactness", OFTReal);
+    oField13.SetWidth(32);
+    oField13.SetPrecision(8);
+    poLayer->CreateField(&oField13);
+    //layer_gml->CreateField(&oField10);
+
+    OGRFieldDefn oField14( "Fcoarseness", OFTReal);
+    oField14.SetWidth(32);
+    oField14.SetPrecision(8);
+    poLayer->CreateField(&oField14);
+    //layer_gml->CreateField(&oField10);
+    OGRFieldDefn oField15( "Fdirection", OFTReal);
+    oField15.SetWidth(32);
+    oField15.SetPrecision(8);
+    poLayer->CreateField(&oField15);
+    //layer_gml->CreateField(&oField10);
+
+    OGRFieldDefn oField16( "classNumber", OFTInteger);
+    oField16.SetWidth(32);
+    oField16.SetPrecision(8);
+    poLayer->CreateField(&oField16);
+
+    OGRFieldDefn oField17( "Fcontrast", OFTReal);
+    oField15.SetWidth(32);
+    oField15.SetPrecision(8);
+    poLayer->CreateField(&oField17);
+
+
+    OGRFieldDefn oField18( "Froughness", OFTReal);
+    oField15.SetWidth(32);
+    oField15.SetPrecision(8);
+    poLayer->CreateField(&oField18);
+    //layer_gml->CreateField(&oField10);
+
+
+    int rc=GDALPolygonize(SegBand,NULL,poLayer,0,NULL,NULL,NULL);//This will write segment number in the first field i.e. ID...
+    std::cout<< "here5 " <<std::endl;
+    //rc=GDALPolygonize(SegBand,NULL,layer_gml,0,NULL,NULL,NULL);//This will write segment number in the first field i.e. ID...
+    //PopulateTable();//this function fills the attribute table using object info from the input data file.
+    //cout<<"polygons done\n";
+
+    int nof=poLayer->GetFeatureCount();
+
+
+//    std::cout<<nof<<std::endl;
+
+    //FILE *fatr;
+    //fatr=fopen(argv[4],"r");//name of the attribute information file..
+    //int NO=atoi(argv[5]);
+    std::cout<< "here6 " <<std::endl;
+    double **Attribute;
+    
+    Attribute=(double **)malloc(NO1*sizeof(double *));
+    std::cout << NO1 << std::endl;
+
+    for(i=0;i<NO1;i++)
+    {
+        Attribute[i]=(double *)malloc(sizeof(double)*17);//number of attributes is 14.
+    }
+    std::cout<< "here7 " <<std::endl;
+   for(i=0;i<nof;i++)
+    {
+
+
+            OGRFeature *feature;
+
+
+        feature = poLayer->GetFeature(i);
+
+
+
+
+
+        onum=feature->GetFieldAsInteger(0);
+
+        feature->SetField(1,i1.objectArray[onum].fVector.meanRed);//Mean_Red
+        feature->SetField(2,i1.objectArray[onum].fVector.meanGreen);//Mean_Green
+        feature->SetField(3,i1.objectArray[onum].fVector.meanBlue);//Mean_Blue
+        feature->SetField(4,i1.objectArray[onum].fVector.stdRed);//Std_Red
+        feature->SetField(5,i1.objectArray[onum].fVector.stdGreen);//Std_Green
+        feature->SetField(6,i1.objectArray[onum].fVector.stdBlue);//Std_Blue
+        feature->SetField(7,i1.objectArray[onum].fVector.area);//Area
+        feature->SetField(8,i1.objectArray[onum].fVector.perimeter);//Perimeter
+        feature->SetField(9,i1.objectArray[onum].fVector.xCentroid);//XCentroid
+        feature->SetField(10,i1.objectArray[onum].fVector.yCentroid);//YCentroid
+        feature->SetField(11,i1.objectArray[onum].fVector.roundness);//Roundness
+        feature->SetField(12,i1.objectArray[onum].fVector.compactness);//Compactness
+        feature->SetField(13,i1.objectArray[onum].fVector.coarseness);//FCoarseness
+        feature->SetField(14,i1.objectArray[onum].fVector.direction);//Fdirection
+        feature->SetField(15,i1.objectArray[onum].fVector.classNumber);//classNumber
+        feature->SetField(16,i1.objectArray[onum].fVector.contrast);
+        feature->SetField(17,i1.objectArray[onum].fVector.roughness);
+
+poLayer->SetFeature(feature);
+//poLayer->GetFIDColumn()
+OGRFeature::DestroyFeature(feature);
+    }
+   std::cout<< "here 8 " << std::endl;
+    poLayer->SyncToDisk();
+   // cout<<"attribute added\n";
+    std::cout<< "here 9 " << std::endl;
+    poDS->SyncToDisk();
+
+std::cout<< "here 10 " << std::endl;
+
+
+
+
+    //	fclose(fseg);
+    OGRDataSource::DestroyDataSource(poDS);//Removes the pointer...
+    //OGRDataSource::DestroyDataSource(source_gml);//Removes the pointer...
+std::cout<< "here 11 " << std::endl;
 }
