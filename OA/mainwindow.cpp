@@ -12,15 +12,13 @@
 #include<sstream>
 #include <QDebug>
 #include<QList>
-#include<gdal\gdal.h>
-#include<gdal\gdal_alg.h>
-#include<gdal\cpl_conv.h>
-#include<gdal\ogr_api.h>
-#include<gdal\ogr_srs_api.h>
+//#include<gdal\gdal.h>
+#include<gdal/gdal_alg.h>
+#include<gdal/cpl_conv.h>
+#include <gdal/gdal_priv.h>
 #include<gdal/cpl_string.h>
 #include<gdal/ogrsf_frmts.h>
-#include<gdal/gdal_priv.h>
-#include<gdal\cpl_port.h>
+#include<gdal/cpl_port.h>
 
 
 MainWindow::MainWindow(int rows, int cols, std::vector<double> dataR, std::vector<double> dataG, std::vector<double> dataB, int bandnum, QWidget *parent) :
@@ -56,12 +54,15 @@ void MainWindow::Show_process(std::string mod)
 void MainWindow::on_pushButton_2_clicked()
 {
 	 ui->textBrowser->setText("calculating mean shift.");
-        if(!ms_dir.isEmpty())
+        if(!data_dir.isEmpty())
         {
 
-
+			img_name = "OpticksImage";
             std::cout << Rows << " -- " << Cols << std::endl;
-            FILE *fp21 = fopen("C:\\Windows\\Temp\\testing.ppm", "wb"); /* b - binary mode */
+			tempimg1 = temp_dir + "\\" + img_name +".ppm";
+		//	QMessageBox::information(this,"value",tempimg1);
+			FILE *fp21 = fopen(tempimg1.toUtf8().data(), "wb"); /* b - binary mode */
+		//	FILE *fp21 = fopen("C:\\Windows\\Temp\\img.ppm", "wb"); /* b - binary mode */
             fprintf(fp21, "P6\n%d %d\n255\n", Cols, Rows);
             
             
@@ -93,7 +94,7 @@ void MainWindow::on_pushButton_2_clicked()
 
         //std::cout << img_fullname.to
 
-        img_name = "OpticksImage";
+        
 
 
         
@@ -127,8 +128,11 @@ void MainWindow::on_pushButton_2_clicked()
                 out<<"MinimumRegionArea ="<< mra <<";\n";
             }
             else if(i==15){
+		//		QString tmp1= "Load('";
+		//		tmp1.append(tempimg1);
+		//		tmp1.append("',IMAGE);\n");
         
-                out<<"Load('C:\\Windows\\Temp\\testing.ppm',IMAGE);\n";
+                out<<"Load('"<< tempimg1 <<"',IMAGE);\n";
             }
             else if(i==23){
                 out<<"Save('C:\\Windows\\Temp\\seg_"<< img_name<<".ppm', PPM, SEGM_IMAGE);\n";
@@ -161,7 +165,7 @@ void MainWindow::on_pushButton_3_clicked()
 {
 	       if(!ms_dir.isEmpty())
        {
-            data1 = readPPMImage(imgsize,"C:/Windows/Temp/testing.ppm",num_band);
+		   data1 = readPPMImage(imgsize,tempimg1.toUtf8().data(),num_band);
     std::cout<<"here1"<<std::endl;
                i1 = Image(Rows, Cols, 3, data1);
         
@@ -196,17 +200,27 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_pushButton_clicked()
 {
 	 QFileDialog::Options options = QFileDialog::DontResolveSymlinks | QFileDialog::ShowDirsOnly;
-    ms_dir = QFileDialog::getExistingDirectory(this,
+
+    data_dir = QFileDialog::getExistingDirectory(this,
                                     tr("QFileDialog::getExistingDirectory()"),
                                     ui->label_2->text(),
                                     options);
-        if (!ms_dir.isEmpty())
-            ui->label_2->setText(ms_dir);
+        if (!data_dir.isEmpty())
+            ui->label_2->setText(data_dir);
+
+		ms_dir=data_dir;
+		ms_dir.append("\\mymeanshift\\release");
+		temp_dir=data_dir;
+		temp_dir.append("\\Temp");
+		out_dir=data_dir;
+		out_dir.append("\\output");
 }
 void MainWindow::on_pushButton_4_clicked()
 {
 	int i= atoi(ui->lineEdit_4->text().toUtf8().data());
-	std::string fname ="C:/Windows/Temp/testing.ppm";
+	//std::string fname ="C:/Windows/Temp/testing.ppm";
+	std::string fname = tempimg1.toUtf8().data();
+
 	pbox = new paint_box(fname,Rows,Cols,i,labels1,this);
 	pbox->show();
 }
@@ -573,34 +587,32 @@ void MainWindow::classificationImage(){
 }
 void MainWindow::Ras2Vect(){
 
-    GDALAllRegister();//To load drivers for all known raster formats
+	
+	    GDALAllRegister();//To load drivers for all known raster formats
 
     //GDALDataset *RasImage;//This holds original data in GeoTiff format..
     //RasImage=(GDALDataset*)GDALOpen(argv[1],GA_Update);//input geotiff file
 
-    int ROWS=Rows;
-    int COLS=Cols;
+    int ROWS=imgsize[0];
+    int COLS=imgsize[1];
     int onum;
 
     GDALDataset *TempImage;//for creating a 32bit datatype image ..
 
     GDALDriver *poDriver1;
 
-    // char *options[]= {"SHPT=SHPT_POLYGON","OGR_ORGANIZE_POLYGONS=DEFAULT"};
-    // cout<<options[0]<<endl;
     poDriver1 = GetGDALDriverManager()->GetDriverByName("GTiff");
-    TempImage = poDriver1->Create( "SegImage.tiff", COLS, ROWS, 1, GDT_Int32,NULL);//this creates an image of 1 band with data type uint32
-    //cout<<"safe"<<endl;
-    // double TC[6];//holds GeoTransform information of the original image...
-
-    // RasImage->GetGeoTransform(TC);
-    // TempImage->SetGeoTransform(TC);
-
+	QString seg_tiff = temp_dir+"\\SegImage.tiff";
+	TempImage = poDriver1->Create( seg_tiff.toUtf8().data(), COLS, ROWS, 1, GDT_Int32,NULL);//this creates an image of 1 band with data type uint32
+//	TempImage = poDriver1->Create( "C:\\Windows\\Temp\\SegImage.tiff", COLS, ROWS, 1, GDT_Int32,NULL);//this creates an image of 1 band with data type uint32
+/*	if(!TempImage){
+		cout << "xxx\n";
+		return;	
+	}
+	*/
     int *segimage;//this will hold segmentation result...
     segimage=(int *)malloc(sizeof(int)*ROWS*COLS);
 
-    //FILE *fseg;
-    //fseg=fopen(argv[2],"r");//input segmentation result in ascii format..
 
     int i;
 
@@ -608,20 +620,11 @@ void MainWindow::Ras2Vect(){
     {
         int y=ROWS-1-(i/COLS);
         int x=(i%COLS);
-        //segimage[i]=labels1[y][x];
+
         segimage[i]=labels1[y][x];
-       // std::cout << x<<" "<<y<<std::endl;
 
-        //fscanf(fseg,"%d",&segimage[i]);
     }
-//    for(i=(ROWS*COLS)-1;i>=0;i--)
-//    {
-//        int x=i/COLS;
-//        int y=(i%COLS);
-//        segimage[i]=labels1[x][y];
 
-//        //fscanf(fseg,"%d",&segimage[i]);
-//    }
     GDALRasterBand *SegBand;//this will hold the segmenatation result..
     SegBand=TempImage->GetRasterBand(1);
     //SegBand->RasterIO(GF_Write,0,0,COLS,ROWS,(void *)segimage,COLS,ROWS,GDT_Int32,0,0);//Writing the BSQ formatted data to SegBand...
@@ -629,50 +632,54 @@ void MainWindow::Ras2Vect(){
     //Now we are ready with an image band holding our segmentation result...
     //Now we have to all gdal function that polygonize a band..
 
-    OGRSFDriver *poDriver,*Driver_gml;//handler for vector data
+	
+    OGRSFDriver *poDriver;//handler for vector data
 
     OGRRegisterAll();
 
     poDriver = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("ESRI Shapefile");//can change output vector format...
     //Driver_gml = OGRSFDriverRegistrar::GetRegistrar()->GetDriverByName("GML");//can change output vector format...
-    OGRDataSource *poDS,*source_gml;
+    OGRDataSource *poDS;
 
-    std::cout << "before split" << std::endl;
-    QList <QString> list1 = img_name.split(QRegExp("\\."));
-    std::cout << "after split" << std::endl;
-
+    
    // std::cout << img_name.toUtf8().data() << std::endl;
+//	QString temp="C:\\Windows\\Temp\\";
+//	temp.append(img_name);
 
-    QString temp = list1.first(),deletecheck,text_number;
-    std::cout << "naming file done" <<std::endl;
-    temp.append(".shp");
+	
+	QString shp = QInputDialog::getText(this,"Input","Enter the name of file you want to save");
+	QString vecFile = out_dir + "\\" +shp;
+	//QMessageBox::information(this,"xx",vecFile);
+	
    // std::cout << "xyz.shp" <<std::endl;
-    //poDS = poDriver->CreateDataSource( "xyz.shp", NULL );//Open a vector file in default format...
-    if( access( temp.toUtf8().data(), F_OK ) != -1 ) {
-        deletecheck = "del ";
-        deletecheck.append(temp);
-        Show_process(deletecheck.toUtf8().data());
+	poDS = poDriver->CreateDataSource( vecFile.toStdString().c_str(), NULL );//Open a vector file in default format...
+  //  if( access( temp.toUtf8().data(), F_OK ) != -1 ) {
+  //      deletecheck = "del ";
+  //      deletecheck.append(temp);
+  //      Show_process(deletecheck.toUtf8().data());
 
-    }
-    std::cout<< "here1 " <<std::endl;
-
-    poDS = poDriver->CreateDataSource( temp.toUtf8().data(), NULL );//Open a vector file in default format...
+  //  }
+  //  std::cout<< "here1 " <<std::endl;
+	
+	//poDS = poDriver->CreateDataSource( "C:\\tmp\\aa.shp", NULL );//Open a vector file in default format...
     std::cout<< "here2 " <<std::endl;
     if( poDS == NULL )
     {
-        printf( "Creation of output file failed.\n" );
+		QMessageBox::information(this,"Error","Creation of Output failed\n");
+        //printf( "Creation of output file failed.\n" );
         exit( 1 );
     }
-
+	
     std::cout<< "here3 " <<std::endl;
     //source_gml = Driver_gml->CreateDataSource( "mygmlfile.gml",NULL );//Open a vector file in default format...
 
-    OGRLayer *poLayer,*layer_gml;
-    poLayer = poDS->CreateLayer( "main_layer", NULL, wkbPolygon, NULL );//main_layer is our only layer for the vector result..
+    OGRLayer *poLayer;
+	poLayer = poDS->CreateLayer( shp.toStdString().c_str(), NULL, wkbPolygon, NULL );//main_layer is our only layer for the vector result..
     //layer_gml = source_gml->CreateLayer( "main_layer", NULL, wkbPolygon, NULL );//main_layer is our only layer for the vector result..
     if( poLayer == NULL )
     {
-        printf( "Layer creation failed.\n" );
+		QMessageBox::information(this,"Error","Layer creation failed.\n");
+        //printf( "Layer creation failed.\n" );
         exit( 1 );
     }
     //Now we need to add fields that each feature can have...
@@ -785,23 +792,14 @@ std::cout<< "here4 " <<std::endl;
     //layer_gml->CreateField(&oField10);
 
 
-    int rc=GDALPolygonize(SegBand,NULL,poLayer,0,NULL,NULL,NULL);//This will write segment number in the first field i.e. ID...
+    int rc=GDALPolygonize(SegBand,NULL,(OGRLayerH)poLayer,0,NULL,NULL,NULL);//This will write segment number in the first field i.e. ID...
     std::cout<< "here5 " <<std::endl;
-    //rc=GDALPolygonize(SegBand,NULL,layer_gml,0,NULL,NULL,NULL);//This will write segment number in the first field i.e. ID...
-    //PopulateTable();//this function fills the attribute table using object info from the input data file.
-    //cout<<"polygons done\n";
 
     int nof=poLayer->GetFeatureCount();
 
 
-//    std::cout<<nof<<std::endl;
-
-    //FILE *fatr;
-    //fatr=fopen(argv[4],"r");//name of the attribute information file..
-    //int NO=atoi(argv[5]);
     std::cout<< "here6 " <<std::endl;
     double **Attribute;
-    
     Attribute=(double **)malloc(NO1*sizeof(double *));
     std::cout << NO1 << std::endl;
 
@@ -809,23 +807,16 @@ std::cout<< "here4 " <<std::endl;
     {
         Attribute[i]=(double *)malloc(sizeof(double)*17);//number of attributes is 14.
     }
+    //int k;
+    //std::cout<<nof <<std::endl;
     std::cout<< "here7 " <<std::endl;
    for(i=0;i<nof;i++)
     {
-
-
-            OGRFeature *feature;
-
-
+        OGRFeature *feature;
         feature = poLayer->GetFeature(i);
-
-
-
-
-
         onum=feature->GetFieldAsInteger(0);
 
-        feature->SetField(1,i1.objectArray[onum].fVector.meanRed);//Mean_Red
+		feature->SetField(1,i1.objectArray[onum].fVector.meanRed);//Mean_Red
         feature->SetField(2,i1.objectArray[onum].fVector.meanGreen);//Mean_Green
         feature->SetField(3,i1.objectArray[onum].fVector.meanBlue);//Mean_Blue
         feature->SetField(4,i1.objectArray[onum].fVector.stdRed);//Std_Red
@@ -843,17 +834,18 @@ std::cout<< "here4 " <<std::endl;
         feature->SetField(16,i1.objectArray[onum].fVector.contrast);
         feature->SetField(17,i1.objectArray[onum].fVector.roughness);
 
-poLayer->SetFeature(feature);
-//poLayer->GetFIDColumn()
-OGRFeature::DestroyFeature(feature);
+
+		poLayer->SetFeature(feature);
+		//poLayer->GetFIDColumn()
+		OGRFeature::DestroyFeature(feature);
     }
    std::cout<< "here 8 " << std::endl;
-    poLayer->SyncToDisk();
+   poLayer->SyncToDisk();
    // cout<<"attribute added\n";
-    std::cout<< "here 9 " << std::endl;
-    poDS->SyncToDisk();
+   std::cout<< "here 9 " << std::endl;
+   poDS->SyncToDisk();
 
-std::cout<< "here 10 " << std::endl;
+	std::cout<< "here 10 " << std::endl;
 
 
 
@@ -861,5 +853,11 @@ std::cout<< "here 10 " << std::endl;
     //	fclose(fseg);
     OGRDataSource::DestroyDataSource(poDS);//Removes the pointer...
     //OGRDataSource::DestroyDataSource(source_gml);//Removes the pointer...
-std::cout<< "here 11 " << std::endl;
+	
+    
+}
+void MainWindow::on_pushButton_6_clicked()
+{
+	Ras2Vect();
+	ui->textBrowser->setText("shape file saved");
 }

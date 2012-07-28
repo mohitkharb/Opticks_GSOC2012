@@ -94,6 +94,7 @@ StepResource pStep("Reading Image Data", "app", "27170298-10CE-4E6C-AD7A-97E8058
    }
    Progress* pProgress = pInArgList->getPlugInArgValue<Progress>(Executable::ProgressArg());
    RasterElement* pCube = pInArgList->getPlugInArgValue<RasterElement>(Executable::DataElementArg());
+   
    if (pCube == NULL)
    {
       std::string msg = "A raster cube must be specified.";

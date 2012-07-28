@@ -13,13 +13,14 @@
     <ClCompile Include="$(BuildDir)\Moc\$(ProjectName)\moc_pain2img.cpp" />
     <ClCompile Include="paint_box.cpp" />
     <ClCompile Include="choosesample.cpp" />
+    <ClCompile Include="$(BuildDir)\Moc\$(ProjectName)\moc_choosesample.cpp" />
+    <ClCompile Include="$(BuildDir)\Moc\$(ProjectName)\moc_paint_box.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="codes.h" />
     <ClInclude Include="$(BuildDir)\Uic\$(ProjectName)\ui_mainwindow.h" />
     <ClInclude Include="$(BuildDir)\Uic\$(ProjectName)\ui_attributebased.h" />
-    <ClInclude Include="paint_box.h" />
-    <ClInclude Include="choosesample.h" />
+    <ClInclude Include="$(BuildDir)\Uic\$(ProjectName)\ui_choosesample.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mainwindow.h" />
@@ -28,8 +29,8 @@
     <CustomBuild Include="attributebased.h" />
     <CustomBuild Include="pain2img.h" />
     <CustomBuild Include="attributebased.ui" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="choosesample.ui" />
+    <CustomBuild Include="choosesample.h" />
+    <CustomBuild Include="paint_box.h" />
+    <CustomBuild Include="choosesample.ui" />
   </ItemGroup>
 </Project>
