@@ -15,12 +15,14 @@
     <ClCompile Include="choosesample.cpp" />
     <ClCompile Include="$(BuildDir)\Moc\$(ProjectName)\moc_choosesample.cpp" />
     <ClCompile Include="$(BuildDir)\Moc\$(ProjectName)\moc_paint_box.cpp" />
+    <ClCompile Include="changeDetection.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="codes.h" />
     <ClInclude Include="$(BuildDir)\Uic\$(ProjectName)\ui_mainwindow.h" />
     <ClInclude Include="$(BuildDir)\Uic\$(ProjectName)\ui_attributebased.h" />
     <ClInclude Include="$(BuildDir)\Uic\$(ProjectName)\ui_choosesample.h" />
+    <ClInclude Include="changeDetection.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="mainwindow.h" />

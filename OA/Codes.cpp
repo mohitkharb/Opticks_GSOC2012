@@ -1192,3 +1192,191 @@ void Object::createAttribute(int objNumber)
     */
     return ;
 }
+void fillRegionChanged(int rows, int cols, int info1[], int info2[],int **dt1,int **dt2,int **&dmerge,int val1,int val2,int label,int bi,int bj,vector< float> &meta_obj)
+{
+    //dt1 is map of time1
+    //dt2 is map of time2
+    //dmerge is the merged map
+    //val1 and val2 is the value pair of the new object
+    // bi and bj are the indexes of the first encountered pixel of this object
+    queue<int> myq;
+    myq.push(bi*cols+bj);//pusing inital pixel into the queue
+    int pos,pos_i,pos_j,i,j;
+    int xmin,xmax,ymin,ymax,nop;//nop is number of pixels in the object;
+    nop=0;
+    xmin=bi;
+    xmax=bi;
+    ymin=bj;
+    ymax=bj;
+
+    while(myq.size()!=0)
+    {
+        pos=myq.front();
+        myq.pop();
+        pos_i=pos/cols;
+        pos_j=pos%cols;
+
+        if(dt1[pos_i][pos_j]==val1 && dt2[pos_i][pos_j]==val2)//this means that the current pixel is of our use..
+        {
+            dmerge[pos_i][pos_j]=label;
+            //update meta info for this oject..
+            if(pos_i<xmin)
+                xmin=pos_i;
+            if(pos_i>xmax)
+                xmax=pos_i;
+
+            if(pos_j<ymin)
+                ymin=pos_j;
+            if(pos_j>ymax)
+                ymax=pos_j;
+            nop++;
+
+            //now pushing the untouched pixels in its neighbourhood into the queue..
+            for(i=pos_i-1;i<=pos_i+1;i++)
+            {
+                for(j=pos_j-1;j<=pos_j+1;j++)
+                {
+                    if((i>=0 && i<rows) &&(j>=0 && j<cols))
+                    {
+                        if (dmerge[i][j]>0 && dmerge[i][j]!=label)//this means this point should not pushed and this is our neighbour..
+                        {
+                        }
+                        else if (dmerge[i][j]<0 && dmerge[i][j]!=-1*label)//this point is to be added...
+                        {
+                            myq.push(i*cols+j);
+                            dmerge[i][j]=-1*label;
+                        }
+
+
+                    }
+                }
+            }
+        }
+    }
+    int s_o1,s_o2;
+
+    s_o1=info1[val1];
+    s_o2=info2[val2];
+
+    meta_obj[0]=(float)label-2;
+    meta_obj[1]=(float)val1;
+    meta_obj[2]=(float)val2;
+    meta_obj[3]=(float)(nop*1.0)/s_o1;
+    meta_obj[4]=(float)(nop*1.0)/s_o2;
+    meta_obj[5]=(float)nop;
+
+    return;
+
+}
+vector< vector< float > > changed(int rows, int cols, int **dt1, int **dt2, int info1[],int info2[], int NO1, int NO2)
+{
+    int i,j,label;
+    int val1,val2;
+    int **dmerge;
+    dmerge=(int **)malloc(rows*sizeof( int *));
+
+    for(i=0;i<rows;i++)
+    {
+        dmerge[i]=(int *)malloc(cols*sizeof(int));
+    }
+
+    vector< vector< float > >pieceInfo;
+    for(i=0;i<rows;i++)
+    {
+        for(j=0;j<cols;j++)
+        {
+            dmerge[i][j]=-1;
+        }
+    }
+
+    //preparing merge map
+    label=2;
+    vector< float >v(6);
+    for(i=0;i<rows;i++)
+    {
+        for(j=0;j<cols;j++)
+        {
+            if(dmerge[i][j]<0)//this means new object will start from this pixel
+            {
+                val1=(int)dt1[i][j];
+                val2=(int)dt2[i][j];
+
+                //this function will fill the newly touched region
+                fillRegionChanged(rows, cols, info1, info2, dt1,dt2,dmerge,val1,val2,label,i,j,v);
+                pieceInfo.push_back(v);
+                label++;
+
+            }
+        }
+    }
+
+    //the merged map has been prepared with label number of objects in it..
+    return pieceInfo;
+}
+
+int *changeReporting(int ROWS, int COLS, float LOW, float HIGH, vector< vector < float > > pinfo, int **merge_map)
+{
+
+    int NOI = pinfo.size();
+
+    int i,L1,M1,H1,L2,M2,H2;
+
+    int *code;//this is to store what code each object is getting
+
+    code =(int *)malloc(sizeof(int)*NOI);
+
+    float ratio1,ratio2;
+
+    printf("coding begins\n");
+
+    for(i=0;i<NOI;i++)
+    {
+        ratio1=pinfo[i][3];
+        ratio2=pinfo[i][4];
+        L1=0; L2=0; M1=0; M2=0; H1=0; H2=0;//initialising variable for deciding
+
+        if(ratio1<=LOW)
+            L1=1;
+        if(ratio1>LOW && ratio1 <HIGH)
+            M1=1;
+        if(ratio1>=HIGH)
+            H1=1;
+
+        if(ratio2<=LOW)
+            L2=1;
+        if(ratio2>LOW && ratio2 <HIGH)
+            M2=1;
+        if(ratio2>=HIGH)
+            H2=1;
+
+        if(L1==1 && L2==1)
+            code[i]=1;
+
+        if(L1==1 && M2==1)
+            code[i]=3;
+
+        if(L1==1 && H2==1)
+            code[i]=2;
+
+        if(M1==1 && L2==1)
+            code[i]=4;
+
+        if(M1==1 && M2==1)
+            code[i]=5;
+
+        if(M1==1 && H2==1)
+            code[i]=6;
+
+        if(H1==1 && L2==1)
+            code[i]=7;
+
+        if(H1==1 && M2==1)
+            code[i]=8;
+
+        if(H1==1 && H2==1)
+            code[i]=9;
+    }
+    printf("coding ends\n");
+
+    return code;
+}
