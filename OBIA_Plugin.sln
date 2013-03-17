@@ -1,10 +1,7 @@
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-
-
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC943}") = "Object_Attribition", "PlugIns\src\OA\OBIA.vcxproj", "{C34B718A-5D9C-4A27-9A26-C670DF82682B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC943}") = "OBIA", "OA\OBIA.vcxproj", "{C34B718A-5D9C-4A27-9A26-C670DF82682B}"
 EndProject
-
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,7 +10,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		
 		{C34B718A-5D9C-4A27-9A26-C670DF82682B}.Debug|Win32.ActiveCfg = Debug|Win32
 		{C34B718A-5D9C-4A27-9A26-C670DF82682B}.Debug|Win32.Build.0 = Debug|Win32
 		{C34B718A-5D9C-4A27-9A26-C670DF82682B}.Debug|x64.ActiveCfg = Debug|x64
@@ -22,7 +18,6 @@ Global
 		{C34B718A-5D9C-4A27-9A26-C670DF82682B}.Release|Win32.Build.0 = Release|Win32
 		{C34B718A-5D9C-4A27-9A26-C670DF82682B}.Release|x64.ActiveCfg = Release|x64
 		{C34B718A-5D9C-4A27-9A26-C670DF82682B}.Release|x64.Build.0 = Release|x64
-		
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
